@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
 	"time"
 
 	"github.com/gabrielmq/gointensivo/internal/order/infra/database"
@@ -29,10 +31,31 @@ func main() {
 	}
 	defer ch.Close()
 
-	out := make(chan amqp.Delivery)
+	out := make(chan amqp.Delivery, 10)
+
 	go rabbitmq.Consume(ch, out)
 
-	for msg := range out {
+	workers := 10
+	for i := 1; i <= workers; i++ {
+		go worker(i, out, uc)
+	}
+
+	http.HandleFunc("/total", func(w http.ResponseWriter, r *http.Request) {
+		uc := usecase.NewTotalUseCase(gateway)
+		total, err := uc.Execute()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+		}
+
+		json.NewEncoder(w).Encode(total)
+	})
+
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func worker(workerID int, deliveryMessage <-chan amqp.Delivery, uc *usecase.CalculateFinalPriceUseCase) {
+	for msg := range deliveryMessage {
 		var input usecase.OrderInputDTO
 		if err := json.Unmarshal(msg.Body, &input); err != nil {
 			panic(err)
@@ -44,7 +67,7 @@ func main() {
 		}
 
 		msg.Ack(false)
-		fmt.Println("Consumed message", output)
-		time.Sleep(500 * time.Millisecond)
+		fmt.Printf("Worker %d has processed order %s\n", workerID, output.ID)
+		time.Sleep(100 * time.Millisecond)
 	}
 }

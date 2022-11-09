@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gointensivo
+spec:
+  selector:
+    matchLabels:
+      app: gointensivo
+  template:
+    metadata:
+      labels:
+        app: gointensivo
+    spec:
+      containers:
+      - name: gointensivo
+        image: gabsms/gointensivo:latest
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080

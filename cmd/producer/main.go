@@ -20,7 +20,7 @@ func main() {
 
 	for i := 0; i < 100000; i++ {
 		Publish(ch, GenerateOrders())
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
