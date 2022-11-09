@@ -13,8 +13,8 @@ import (
 
 type CalculatePriceUseCaseTestSuite struct {
 	suite.Suite
-	OrderRepository database.OrderRepository
-	Db              *sql.DB
+	OrderGateway entity.OrderGateway
+	Db           *sql.DB
 }
 
 func (suite *CalculatePriceUseCaseTestSuite) SetupTest() {
@@ -23,7 +23,7 @@ func (suite *CalculatePriceUseCaseTestSuite) SetupTest() {
 
 	db.Exec("CREATE TABLE orders (id varchar(255) NOT NULL, price float NOT NULL, tax float NOT NULL, final_price float NOT NULL, PRIMARY KEY (id))")
 	suite.Db = db
-	suite.OrderRepository = *database.NewOrderRepository(db)
+	suite.OrderGateway = database.NewOrderRepository(db)
 }
 
 func (suite *CalculatePriceUseCaseTestSuite) TearDownTest() {
@@ -44,7 +44,7 @@ func (suite *CalculatePriceUseCaseTestSuite) TestCalculateFinalPrice() {
 		Price: order.Price,
 		Tax:   order.Tax,
 	}
-	calculateFinalPriceUseCase := NewCalculateFinalPriceUseCase(suite.OrderRepository)
+	calculateFinalPriceUseCase := NewCalculateFinalPriceUseCase(suite.OrderGateway)
 	output, err := calculateFinalPriceUseCase.Execute(calculateFinalPriceInput)
 	suite.NoError(err)
 

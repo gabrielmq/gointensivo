@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"github.com/gabrielmq/gointensivo/internal/order/entity"
-	"github.com/gabrielmq/gointensivo/internal/order/infra/database"
 )
 
 type OrderInputDTO struct {
@@ -28,12 +27,12 @@ func NewOrderOutputDTOFrom(order *entity.Order) *OrderOutputDTO {
 }
 
 type CalculateFinalPriceUseCase struct {
-	OrderRepository entity.OrderGateway
+	OrderGateway entity.OrderGateway
 }
 
-func NewCalculateFinalPriceUseCase(orderRepository database.OrderRepository) *CalculateFinalPriceUseCase {
+func NewCalculateFinalPriceUseCase(orderGateway entity.OrderGateway) *CalculateFinalPriceUseCase {
 	return &CalculateFinalPriceUseCase{
-		OrderRepository: &orderRepository,
+		OrderGateway: orderGateway,
 	}
 }
 
@@ -47,7 +46,7 @@ func (c *CalculateFinalPriceUseCase) Execute(input OrderInputDTO) (*OrderOutputD
 		return nil, err
 	}
 
-	if err = c.OrderRepository.Save(order); err != nil {
+	if err = c.OrderGateway.Save(order); err != nil {
 		return nil, err
 	}
 	return NewOrderOutputDTOFrom(order), nil
